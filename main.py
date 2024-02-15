@@ -6,6 +6,7 @@ if __name__ == '__main__':
     player = Player(name)
     print("A fucking slime appeared !")
     slime = Slime()
+    print(" ")
     while slime.get_hp() > 0 and player.get_hp() > 0:
         choice = input("What do you do ? Attack, heal or defend ? ")
         if choice.lower() == "attack":
@@ -19,3 +20,4 @@ if __name__ == '__main__':
             slime.turn(player)
         else:
             print("I don't understand what you're talking about, please try again.")
+        print(" ")

@@ -65,10 +65,8 @@ class Entity:
 
     def check(self, item):
         """takes in a str item and check if it is in entity's status
-        return True if yes and False if no"""
-        if item in self.status:
-            return True
-        return False
+        return the number of time item appears in entity's status"""
+        return self.status.count(item)
 
     def remove(self, item):
         """takes in a str item and removes it from entity's status
@@ -96,7 +94,7 @@ class Entity:
         except:
             raise RuntimeError("something happened during " + self.name + "'s attack")
         else:
-            return True
+            return self.end_turn("attack")
 
     def cast_heal(self, target):
         """takes in an entity target and will pass it in every function in entity's heal list
@@ -111,7 +109,7 @@ class Entity:
         except:
             raise RuntimeError("something happened during " + self.name + "'s heal")
         else:
-            return True
+            return self.end_turn("heal")
 
     def cast_defend(self, target):
         """takes in an entity target and will pass it in every function in entity's defend list
@@ -126,7 +124,7 @@ class Entity:
         except:
             raise RuntimeError("something happened during " + self.name + "'s defend")
         else:
-            return True
+            return self.end_turn("defend")
 
     def turn(self, target):
         """takes in an entity target and user will take its turn automically
@@ -152,12 +150,35 @@ class Entity:
             # and random() gives a float between 0 and 1, but hey, ya never knwo
             raise RuntimeError("What")
 
+    def end_turn(self, action):
+        """handles end of turn logic (like DoT effects and lowering buffs duration)
+        takes in a str action representing the action done during this turn"""
+        if action != "defend" and self.check("shield"):  # lower buffs (and debuffs when I'll add those)
+            if self.check("sturdy"):  # sturdy will allow you to keep shields for longer
+                self.remove("sturdy")
+            else:
+                self.remove("shield")
+            # Maybe I should add a debuff list to know which to lower and automatically do it
+
+        if self.check("burn"):  # burn logic
+            damage = self.check("burn")
+            if self.check("wet"):
+                damage *= 2
+                print(self.name + " evaporates")
+                self.remove("wet")
+            self.hurt += damage
+            print(self.name + " took " + str(damage) + " damage from burn")
+            self.remove("burn")
+        return True
+
 
 class Player(Entity):
     def __init__(self, name):
         super().__init__(name, 20, 6, 3, 3)
+        self.attack.append(lambda user, target: target.add("burn"))
 
 
 class Slime(Entity):
     def __init__(self):
         super().__init__("Slime", 10, 4, 1, 2)
+        self.add(("wet", 999))
