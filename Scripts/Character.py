@@ -1,4 +1,5 @@
 from random import random, choice
+from Scripts.Elements import fire, nature, earth, water
 
 
 class Entity:
@@ -19,9 +20,20 @@ class Entity:
         self.heal = [lambda user, target: user.recover(user.magic)]
         self.defend = [lambda user, target: user.add(("shield", (user.defence // 10) + 1))]
 
+        self.alignement = {"fire": 0,  # goes up when entity attacks
+                           "nature": 0,  # goes up when entity heals
+                           "earth": 0,  # goes up when entity blocks damage (shield or defence)
+                           "water": 0,  # goes up when entity ends turn with full hp (might wanna change it)
+                           "good": 0}
+
+        self.loot = []
+
     def get_hp(self):
         """return entity's current hp"""
         return self.maxhp - self.hurt
+
+    def get_speed(self):
+        return self.strength + self.defence + len(self.loot)
 
     def alive(self):
         """return True if entity is alive, False if they're dead"""
@@ -33,11 +45,14 @@ class Entity:
         if self.check("shield"):  # we check for shield
             self.remove("shield")
             print(self.name + " had a shield.")
+            self.alignement["earth"] += 2
             return False
         if damage - self.defence <= 0:  # we check for negative damage (bad)
             print(self.name + " received " + str(0) + " damage")
             return False
-        self.hurt += damage - self.defence
+        if self.defence != 0:
+            self.hurt += damage - self.defence
+            self.alignement["earth"] += 2
         print(self.name + " received " + str(damage - self.defence) + " damage")
         return True
 
@@ -90,7 +105,9 @@ class Entity:
         print(self.name + " attacked")
         try:
             for act in self.attack:
-                act(self, target)
+                ans = act(self, target)
+                if ans:
+                    self.alignement["fire"] += 1
         except:
             raise RuntimeError("something happened during " + self.name + "'s attack")
         else:
@@ -105,7 +122,9 @@ class Entity:
         print(self.name + " used magic")
         try:
             for act in self.heal:
-                act(self, target)
+                ans = act(self, target)
+                if ans:
+                    self.alignement["earth"] += 1
         except:
             raise RuntimeError("something happened during " + self.name + "'s heal")
         else:
@@ -169,6 +188,9 @@ class Entity:
             self.hurt += damage
             print(self.name + " took " + str(damage) + " damage from burn")
             self.remove("burn")
+
+        if self.get_hp() == self.maxhp:
+            self.alignement["water"] += self.magic
         return True
 
 
@@ -176,6 +198,37 @@ class Player(Entity):
     def __init__(self, name):
         super().__init__(name, 20, 6, 3, 3)
         self.attack.append(lambda user, target: target.add("burn"))
+
+    def rest(self):
+        self.recover(self.magic * 3)
+        order = [s[1] for s in sorted([(self.alignement[e], e) for e in ["fire", "nature", "earth", "water"]])]
+        for e in order:
+            if e == "fire":
+                for lv in fire:
+                    if lv <= self.alignement["fire"]:
+                        fire[lv].apply(self)
+                        del fire[lv]
+                        return True
+            elif e == "nature":
+                for lv in nature:
+                    if lv <= self.alignement["nature"]:
+                        nature[lv].apply(self)
+                        del nature[lv]
+                        return True
+            elif e == "earth":
+                for lv in earth:
+                    if lv <= self.alignement["earth"]:
+                        earth[lv].apply(self)
+                        del earth[lv]
+                        return True
+            elif e == "water":
+                for lv in water:
+                    if lv <= self.alignement["water"]:
+                        water[lv].apply(self)
+                        del water[lv]
+                        return True
+        print("This was a quiet night.")
+        return True
 
 
 class Slime(Entity):
