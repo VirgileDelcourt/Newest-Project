@@ -26,14 +26,16 @@ class Entity:
                            "water": 0,  # goes up when entity ends turn with full hp (might wanna change it)
                            "good": 0}
 
-        self.loot = []
+        self.loot = []  # list of all the items gotten by Entity (player)
 
     def get_hp(self):
         """return entity's current hp"""
         return self.maxhp - self.hurt
 
     def get_speed(self):
-        return self.strength + self.defence + len(self.loot)
+        """return entity's speed
+        (the higher the result is, the slower the entity is)"""
+        return self.strength + self.defence + len(self.loot) * 2  # character speed is basically how heavy they are
 
     def alive(self):
         """return True if entity is alive, False if they're dead"""
@@ -50,10 +52,12 @@ class Entity:
         if damage - self.defence <= 0:  # we check for negative damage (bad)
             print(self.name + " received " + str(0) + " damage")
             return False
-        if self.defence != 0:
+        if self.defence != 0:  # this check is simply for alignement purpose
             self.hurt += damage - self.defence
             self.alignement["earth"] += 2
         print(self.name + " received " + str(damage - self.defence) + " damage")
+        if not self.alive():  # to notify when this entity died
+            print(self.name + " is dead.")
         return True
 
     def recover(self, strength):
@@ -200,7 +204,11 @@ class Player(Entity):
         self.attack.append(lambda user, target: target.add("burn"))
 
     def rest(self):
+        """handles the rest logic (level up)
+        during rest, up to one element might level up if the alignement is high enough (priority to the highest one)
+        also heals the player by 3x their magic"""
         self.recover(self.magic * 3)
+        # we get the order of level up check (the ones with the highest alignements go first)
         order = [s[1] for s in sorted([(self.alignement[e], e) for e in ["fire", "nature", "earth", "water"]])]
         for e in order:
             if e == "fire":
@@ -227,7 +235,7 @@ class Player(Entity):
                         water[lv].apply(self)
                         del water[lv]
                         return True
-        print("This was a quiet night.")
+        print("This was a quiet night.")  # this is in case no element leveled up
         return True
 
 

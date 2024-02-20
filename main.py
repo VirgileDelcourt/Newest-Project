@@ -1,4 +1,5 @@
 from Scripts.Character import Player, Slime
+from time import sleep
 
 
 def turn(characters: list):
@@ -12,8 +13,8 @@ if __name__ == '__main__':
     name = input("Enter the name of your hero : ")
     player = Player(name)
 
-    while 1 > 0:
-        while time < 24:
+    while 1 > 0:  # game loop
+        while time < 24:  # battles loop
             print("A fucking slime appeared !")
             slime = Slime()
             print(" ")
@@ -29,20 +30,21 @@ if __name__ == '__main__':
                     act = None
                     print("I don't understand what you're talking about, please try again.")
 
-                if act != None:
+                if act is not None:
                     for char in turn([player, slime]):
                         if char == player:
                             act(slime)
                         else:
                             char.turn(player)
+                        sleep(1)
                         print(" ")
-                print(" ")
                 time += actiontime
         print("This was a long day.")
         print("You set up a campfire and rest for the night.")
-        player.rest()
+        player.rest()  # level up
+        sleep(3)
         print(" ")
 
         time -= 24
-        if actiontime != 1:
+        if actiontime != 1:  # increases days duration
             actiontime -= 1
